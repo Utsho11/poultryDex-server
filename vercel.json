@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/api/index.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "MONGODB_URI": "mongodb+srv://utsho_roy:utsho%401244@cluster0.2g6iibi.mongodb.net/poultrydex?appName=Cluster0",
+    "BCRYPT_SALT_ROUNDS": "10",
+    "JWT_SECRET": "poultrydex_sec_jwt_e83b4c1097fa62d854e1903bcde652a1",
+    "JWT_ACCESS_SECRET": "poultrydex_sec_jwt_e83b4c1097fa62d854e1903bcde652a1",
+    "JWT_ACCESS_EXPIRES_IN": "7d",
+    "JWT_REFRESH_SECRET": "poultryops_super_secret_refresh_jwt_key_2026",
+    "JWT_REFRESH_EXPIRES_IN": "30d"
+  }
+}
