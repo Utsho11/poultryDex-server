@@ -53,8 +53,8 @@ const registerUser = async (payload: IRegisterUserPayload) => {
       email: user.email || '',
       name: user.name,
     },
-    config.jwt_access_secret,
-    config.jwt_access_expires_in
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string
   );
 
   return {
@@ -126,8 +126,8 @@ const registerFarm = async (payload: IRegisterFarmPayload) => {
       email: owner.email || '',
       name: owner.name,
     },
-    config.jwt_access_secret,
-    config.jwt_access_expires_in
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string
   );
 
   return {
@@ -188,8 +188,8 @@ const loginUser = async (payload: ILoginPayload) => {
       email: user.email || '',
       name: user.name,
     },
-    config.jwt_access_secret,
-    config.jwt_access_expires_in
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string
   );
 
   return {
@@ -267,8 +267,8 @@ const switchFirm = async (userId: string, payload: ISwitchFarmPayload) => {
       email: user.email || '',
       name: user.name,
     },
-    config.jwt_access_secret,
-    config.jwt_access_expires_in
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string
   );
 
   return {

@@ -1,16 +1,16 @@
-import mongoose from 'mongoose';
-import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
-import config from '../../config';
-import { createToken } from '../../utils/verifyJWT';
-import { Farm } from './farm.model';
-import { User } from '../User/user.model';
-import QueryBuilder from '../../builder/QueryBuilder';
-import { farmSearchableFields } from './farm.constant';
+import mongoose from "mongoose";
+import httpStatus from "http-status";
+import AppError from "../../errors/AppError";
+import config from "../../config";
+import { createToken } from "../../utils/verifyJWT";
+import { Farm } from "./farm.model";
+import { User } from "../User/user.model";
+import QueryBuilder from "../../builder/QueryBuilder";
+import { farmSearchableFields } from "./farm.constant";
 
 const createFarm = async (userId: string, payload: any) => {
   if (!userId) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'User context missing');
+    throw new AppError(httpStatus.UNAUTHORIZED, "User context missing");
   }
 
   const { name, animalType, date, location, timezone } = payload;
@@ -21,8 +21,8 @@ const createFarm = async (userId: string, payload: any) => {
     date: date ? new Date(date) : new Date(),
     location,
     ownerId: userId,
-    timezone: timezone || 'Asia/Dhaka',
-    plan: 'pro',
+    timezone: timezone || "Asia/Dhaka",
+    plan: "pro",
   });
 
   await farm.save();
@@ -38,12 +38,12 @@ const createFarm = async (userId: string, payload: any) => {
     {
       userId,
       farmId: (farm._id as any).toString(),
-      role: user?.role || 'owner',
-      email: user?.email || '',
-      name: user?.name || '',
+      role: user?.role || "owner",
+      email: user?.email || "",
+      name: user?.name || "",
     },
-    config.jwt_access_secret,
-    config.jwt_access_expires_in
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
   );
 
   return {
@@ -63,7 +63,11 @@ const createFarm = async (userId: string, payload: any) => {
   };
 };
 
-const getFarms = async (userId: string, tokenFarmId?: string, query: Record<string, unknown> = {}) => {
+const getFarms = async (
+  userId: string,
+  tokenFarmId?: string,
+  query: Record<string, unknown> = {},
+) => {
   const orConditions: any[] = [];
   if (userId && mongoose.Types.ObjectId.isValid(userId)) {
     orConditions.push({ ownerId: userId });
@@ -76,10 +80,7 @@ const getFarms = async (userId: string, tokenFarmId?: string, query: Record<stri
     return [];
   }
 
-  const farmQuery = new QueryBuilder(
-    Farm.find({ $or: orConditions }),
-    query
-  )
+  const farmQuery = new QueryBuilder(Farm.find({ $or: orConditions }), query)
     .search(farmSearchableFields)
     .filter()
     .sort()
@@ -90,20 +91,28 @@ const getFarms = async (userId: string, tokenFarmId?: string, query: Record<stri
   return result;
 };
 
-const getFarmById = async (farmId: string, userId: string, tokenFarmId?: string) => {
+const getFarmById = async (
+  farmId: string,
+  userId: string,
+  tokenFarmId?: string,
+) => {
   if (!mongoose.Types.ObjectId.isValid(farmId)) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   const farm = await Farm.findById(farmId);
   if (!farm) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   const isOwner = farm.ownerId && farm.ownerId.toString() === userId;
-  const isMember = tokenFarmId && tokenFarmId.toString() === farm._id.toString();
+  const isMember =
+    tokenFarmId && tokenFarmId.toString() === farm._id.toString();
   if (!isOwner && !isMember) {
-    throw new AppError(httpStatus.FORBIDDEN, 'You do not have access to this firm');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You do not have access to this firm",
+    );
   }
 
   return farm;
@@ -111,17 +120,20 @@ const getFarmById = async (farmId: string, userId: string, tokenFarmId?: string)
 
 const updateFarm = async (farmId: string, userId: string, payload: any) => {
   if (!mongoose.Types.ObjectId.isValid(farmId)) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   const farm = await Farm.findById(farmId);
   if (!farm) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   const isOwner = farm.ownerId && farm.ownerId.toString() === userId;
   if (!isOwner) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Only the firm owner can update firm details');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Only the firm owner can update firm details",
+    );
   }
 
   const { name, animalType, date, location } = payload;
@@ -136,37 +148,40 @@ const updateFarm = async (farmId: string, userId: string, payload: any) => {
 
 const deleteFarm = async (farmId: string, userId: string) => {
   if (!mongoose.Types.ObjectId.isValid(farmId)) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   const farm = await Farm.findById(farmId);
   if (!farm) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Firm not found');
+    throw new AppError(httpStatus.NOT_FOUND, "Firm not found");
   }
 
   if (farm.ownerId.toString() !== userId) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Only the firm owner can delete this firm');
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Only the firm owner can delete this firm",
+    );
   }
 
   // Dynamic model resolution to avoid circular dependencies
   const collections = mongoose.connection.collections;
   await Promise.all([
-    collections['batches']?.deleteMany({ farmId }),
-    collections['batch_workers']?.deleteMany({ farmId }),
-    collections['reminders']?.deleteMany({ farmId }),
-    collections['dailylogs']?.deleteMany({ farmId }),
-    collections['expenses']?.deleteMany({ farmId }),
-    collections['sales']?.deleteMany({ farmId }),
-    collections['feedstocks']?.deleteMany({ farmId }),
-    collections['customers']?.deleteMany({ farmId }),
-    collections['payments']?.deleteMany({ farmId }),
-    collections['healthrecords']?.deleteMany({ farmId }),
+    collections["batches"]?.deleteMany({ farmId }),
+    collections["batch_workers"]?.deleteMany({ farmId }),
+    collections["reminders"]?.deleteMany({ farmId }),
+    collections["dailylogs"]?.deleteMany({ farmId }),
+    collections["expenses"]?.deleteMany({ farmId }),
+    collections["sales"]?.deleteMany({ farmId }),
+    collections["feedstocks"]?.deleteMany({ farmId }),
+    collections["customers"]?.deleteMany({ farmId }),
+    collections["payments"]?.deleteMany({ farmId }),
+    collections["healthrecords"]?.deleteMany({ farmId }),
     User.updateMany({ activeFarmId: farmId }, { $unset: { activeFarmId: 1 } }),
     User.updateMany({ farmId: farmId }, { $unset: { farmId: 1 } }),
     Farm.deleteOne({ _id: farmId }),
   ]);
 
-  return { message: 'Firm and all associated data deleted successfully' };
+  return { message: "Firm and all associated data deleted successfully" };
 };
 
 export const FarmServices = {
